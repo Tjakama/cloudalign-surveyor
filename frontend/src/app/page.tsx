@@ -1,119 +1,129 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import Image from "next/image"
+import React, { useState } from 'react';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
-export default function SignInPage() {
-  const router = useRouter()
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [error, setError] = useState("")
+const USER_DIRECTORY: Record<string, { role: string; path: string; name: string }> = {
+  'md@cloudalign.co.za': {
+    name: 'Executive MD',
+    role: 'Managing Director',
+    path: '/md/dashboard',
+  },
+  'techlead@cloudalign.co.za': {
+    name: 'Tech Lead',
+    role: 'Technology Operations Lead',
+    path: '/tech-lead/dashboard',
+  },
+  'rndlead@cloudalign.co.za': {
+    name: 'R&D Lead',
+    role: 'Research & Development Lead',
+    path: '/rnd-lead/dashboard',
+  },
+  'letjamela.mabea@cloudalign.co.za': {
+    name: 'Letjamela Mabea',
+    role: 'Field Engineer',
+    path: '/engineer/dashboard',
+  },
+  'sales@cloudalign.co.za': {
+    name: 'Sales Manager',
+    role: 'Sales & Marketing',
+    path: '/sales/dashboard',
+  },
+  'finance@cloudalign.co.za': {
+    name: 'Chief Accountant',
+    role: 'Finance Department',
+    path: '/finance/dashboard',
+  },
+};
+
+export default function LoginPage() {
+  const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
   const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
+    e.preventDefault();
+    const cleanEmail = email.trim().toLowerCase();
+    const user = USER_DIRECTORY[cleanEmail];
 
-    if (!email || !password) {
-      setError("Please fill in all credential fields.")
-      return
-    }
-
-    // Demo auto-routing based on email content
-    const lowerEmail = email.toLowerCase()
-    const isTeamLead = 
-      lowerEmail.includes("lead") || 
-      lowerEmail.includes("manager") || 
-      lowerEmail.includes("admin") || 
-      lowerEmail.includes("sarah")
-
-    if (isTeamLead) {
-      router.push("/dashboard")
+    if (user) {
+      localStorage.setItem('cloudalign_current_user', JSON.stringify({ email: cleanEmail, ...user }));
+      router.push(user.path);
     } else {
-      router.push("/engineer/dashboard")
+      setError('Invalid credentials or unauthorized email address.');
     }
-  }
+  };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-900 px-4 py-8">
-      <div className="w-full max-w-md space-y-6 rounded-3xl bg-white p-8 shadow-2xl border border-slate-800">
+    <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-4">
+      <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl space-y-6">
         
-        {/* Company Logo Container */}
+        {/* Logo & Header */}
         <div className="text-center space-y-3">
-          <div className="flex items-center justify-center rounded-2xl bg-white p-2 mx-auto w-fit ">
+          <div className="relative w-20 h-20 mx-auto">
             <Image
-              src="/images/log.png" 
+              src="/images/log.png"
               alt="Cloudalign Logo"
-              width={160}
-              height={70}
-              className="h-12 w-auto object-contain"
+              fill
+              className="object-contain"
               priority
             />
           </div>
-          <div>
-            
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-              Sign In
-            </h1>
-           {/* <p className="text-xs text-slate-500 mt-1">
-              Enter your credentials to access your workspace
-            </p> */}
-          </div>
+          <h1 className="text-2xl font-extrabold tracking-tight">Cloudalign Surveyor</h1>
+          
         </div>
 
+        {/* Error Alert */}
         {error && (
-          <div className="rounded-xl bg-red-50 p-3 text-xs font-semibold text-red-600 border border-red-100">
+          <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-xs p-3 rounded-xl text-center">
             {error}
           </div>
         )}
 
+        {/* Form */}
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
+            <label className="block text-xs font-semibold text-slate-400 mb-1">
               Email
             </label>
             <input
               type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="e.g.thabo@cloudalign.co.ls"
-              className="w-full rounded-xl border border-slate-200 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 bg-slate-50"
               required
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setError('');
+              }}
+              placeholder="e.g. techlead@cloudalign.co.za"
+              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-slate-600"
             />
-           {/*<p className="text-[11px] text-slate-400 mt-1">
-              *Tip: Use <span className="font-semibold text-slate-600">"sarah@cloudalign.co.za"</span> to test the Team Lead dashboard.
-            </p> */}
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
+            <label className="block text-xs font-semibold text-slate-400 mb-1">
               Password
             </label>
             <input
               type="password"
+              required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full rounded-xl border border-slate-200 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 bg-slate-50"
-              required
+              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-slate-600"
             />
           </div>
 
           <button
             type="submit"
-            className="w-full rounded-xl bg-blue-600 px-4 py-3.5 text-sm font-semibold text-white shadow-lg shadow-blue-600/20 hover:bg-blue-500 transition-all active:scale-[0.98]"
+            className="w-full py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm rounded-xl shadow-lg shadow-blue-600/30 transition-all"
           >
-            Sign In
+            Login →
           </button>
         </form>
 
-       {/* <div className="text-center pt-2 border-t border-slate-100">
-          <p className="text-xs text-slate-400">
-            Secured via Cloudalign Enterprise Directory
-          </p>
-        </div> */}
-
       </div>
-    </main>
-  )
+    </div>
+  );
 }

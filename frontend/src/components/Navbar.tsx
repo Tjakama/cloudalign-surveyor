@@ -43,7 +43,7 @@ export default function Navbar({ userName, userRole, userEmail }: NavbarProps) {
           </div>
 
           <div className="h-9 w-9 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs shadow-sm shrink-0">
-            {userName.split(" ").map(n => n[0]).join("")}
+            {userName ? userName.split(" ").map(n => n[0]).join("") : "U"}
           </div>
 
           <button

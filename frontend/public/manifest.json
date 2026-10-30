@@ -1,0 +1,21 @@
+{
+  "name": "Cloudalign Surveyor",
+  "short_name": "Cloudalign",
+  "description": "Field Engineer & Site Survey Management Platform",
+  "start_url": "/engineer/dashboard",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0284c7",
+  "icons": [
+    {
+      "src": "/images/log.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/images/log.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
