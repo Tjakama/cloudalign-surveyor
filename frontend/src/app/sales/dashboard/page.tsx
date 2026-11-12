@@ -59,7 +59,7 @@ export default function SalesDashboard() {
         </div>
         <div className="flex items-center space-x-4">
           <div className="text-right">
-            <h4 className="text-sm font-bold text-white leading-none">Nthabiseng Phoofolo</h4>
+            <h4 className="text-sm font-bold text-white leading-none">Masheane</h4>
             <p className="text-[11px] text-slate-400 mt-0.5">
               Sales Lead • <span className="text-slate-500">sales@cloudalign.co.za</span>
             </p>

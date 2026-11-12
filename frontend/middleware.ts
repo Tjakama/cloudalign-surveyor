@@ -1,17 +1,27 @@
-import { NextResponse } from "next/server"
-import type { NextRequest } from "next/server"
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { getToken } from "next-auth/jwt";
 
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
+export async function middleware(request: NextRequest) {
+  const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET });
+  const { pathname } = request.nextUrl;
 
-  // Redirect root URL directly to the sign-in page
-  if (pathname === "/") {
-    return NextResponse.redirect(new URL("/auth/signin", request.url))
+  // Protect admin and department routes
+  if (!token && pathname !== "/auth/signin") {
+    return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  return NextResponse.next()
+  return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/"],
-}
+  matcher: [
+    "/admin/:path*",
+    "/engineer/:path*",
+    "/finance/:path*",
+    "/md/:path*",
+    "/rnd-lead/:path*",
+    "/sales/:path*",
+    "/tech-lead/:path*",
+  ],
+};

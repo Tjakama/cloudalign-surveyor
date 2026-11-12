@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { TaskProvider } from "@/context/TaskContext";
 import "./globals.css";
+import { AuthProvider } from "@/context/AuthContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,34 +14,26 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Cloudalign Surveyor",
-  description: "Field Engineer & Survey Management Platform",
-  manifest: "/manifest.json",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "default",
-    title: "Cloudalign",
-  },
-  icons: {
-    icon: "/images/log.png",
-    apple: "/images/log.png",
-  },
+  title: "CloudAlign Surveyor Platform",
+  description: "Enterprise Solar and Telecommunications Site Inspection Platform",
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0284c7",
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
     <html lang="en">
-      <body>
-        <TaskProvider>
-          {children}
-        </TaskProvider>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#070A11] text-slate-100`}
+      >
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );

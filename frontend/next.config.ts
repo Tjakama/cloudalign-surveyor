@@ -1,9 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: "export", // Required for static export & native app builds
+  // output: "export", // Removed to support dynamic API routes with Supabase & Prisma
   images: {
-    unoptimized: true, // Required for static image loading without a Node server
+    unoptimized: true,
   },
   typescript: {
     ignoreBuildErrors: true, // Bypasses strict type-checking so production builds succeed

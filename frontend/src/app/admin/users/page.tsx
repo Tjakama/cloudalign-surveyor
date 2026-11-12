@@ -1,179 +1,206 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useAuth, UserRole } from '@/context/AuthContext';
+import React, { useState, useEffect } from 'react';
 
-const ALL_ROLES: UserRole[] = [
-  'Administrator',
-  'Project Manager',
-  'Surveyor',
-  'Engineer',
-  'Reviewer',
-  'Approver',
-  'Collaborator',
-];
-
-export default function UserManagementPage() {
-  const { users, addUser, updateUserRole, auditLogs, currentUser, setCurrentUser } = useAuth();
-  
-  const [isModalOpen, setIsModalOpen] = useState(false);
+export default function AdminUsersPage() {
+  const [users, setUsers] = useState<any[]>([]);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState<UserRole>('Engineer');
+  const [role, setRole] = useState('ENGINEER');
+  const [loading, setLoading] = useState(false);
 
-  const handleCreateUser = (e: React.FormEvent) => {
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    try {
+      const res = await fetch('/api/admin/users');
+      const data = await res.json();
+      if (data.success) setUsers(data.users);
+    } catch (err) {
+      console.error('Failed to fetch users');
+    }
+  };
+
+  const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
-    addUser({ name, email, role, status: 'Active' });
-    setName('');
-    setEmail('');
-    setIsModalOpen(false);
+    setLoading(true);
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, role }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        setName('');
+        setEmail('');
+        fetchUsers();
+      } else {
+        alert(data.error || 'Failed to create user.');
+      }
+    } catch (err: any) {
+      alert('Network error: ' + err.message);
+    }
+    setLoading(false);
+  };
+
+  const handleRoleChange = async (id: string, newRole: string) => {
+    await fetch('/api/admin/users', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, role: newRole }),
+    });
+    fetchUsers();
+  };
+
+  const handleDeleteUser = async (u: any) => {
+    if (!confirm(`Are you sure you want to delete ${u.name}?`)) return;
+
+    const res = await fetch(`/api/admin/users?id=${u.id}&email=${encodeURIComponent(u.email)}`, {
+      method: 'DELETE',
+    });
+
+    const data = await res.json();
+    if (res.ok && data.success) {
+      fetchUsers();
+    } else {
+      alert(data.error || 'Failed to delete user.');
+    }
+  };
+  const handleSignOut = () => {
+    // Clear all browser session data
+    localStorage.clear();
+    sessionStorage.clear();
+    
+    // Force clean navigation to root
+    window.location.replace('/');
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-8 space-y-8">
-      {/* Header */}
-      <div className="flex justify-between items-center bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
+    <div className="min-h-screen bg-[#070A11] text-white p-8 max-w-5xl mx-auto space-y-8">
+      <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-2xl font-black text-white">User Authentication & RBAC Control</h1>
-          <p className="text-xs text-slate-400 mt-1">Manage user entities, assign initial roles, and review security audit logs.</p>
+          <span className="px-3 py-1 bg-purple-500/15 text-purple-400 border border-purple-500/30 text-[10px] font-extrabold uppercase rounded-full">
+            CloudAlign Control Panel
+          </span>
+          <h1 className="text-2xl font-black mt-2">Team & Role Provisioning</h1>
+          <p className="text-slate-400 text-xs">Manage system users, field engineers, and tech leads stored directly in Supabase.</p>
         </div>
-        <div className="flex items-center space-x-3">
-          <div className="text-right text-xs">
-            <p className="text-slate-400">Active Session:</p>
-            <p className="font-bold text-emerald-400">{currentUser.name} ({currentUser.role})</p>
-          </div>
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-blue-600/30"
-          >
-            + Register New User
-          </button>
-        </div>
+        <button
+          onClick={handleSignOut}
+          className="bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md"
+        >
+          Sign Out
+        </button>
       </div>
 
-      {/* Users Table */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
-        <h2 className="text-lg font-extrabold text-white">System Users & Role Assignments</h2>
+      {/* Add User Form */}
+      <form onSubmit={handleCreateUser} className="bg-slate-900 border border-slate-800 rounded-3xl p-6 grid grid-cols-4 gap-4 items-end shadow-xl">
+        <div className="space-y-1">
+          <label className="block text-slate-300 font-bold text-xs">Full Name</label>
+          <input
+            type="text"
+            required
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="e.g. Letjamela Mabea"
+            className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white"
+          />
+        </div>
+        <div className="space-y-1">
+          <label className="block text-slate-300 font-bold text-xs">Email Address</label>
+          <input
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="user@cloudalign.co.za"
+            className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white"
+          />
+        </div>
+        <div className="space-y-1">
+          <label className="block text-slate-300 font-bold text-xs">System Role</label>
+          <select
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+            className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white"
+          >
+            <option value="ENGINEER">ENGINEER</option>
+            <option value="TECH_LEAD">TECH_LEAD</option>
+            <option value="SALES">SALES</option>
+            <option value="ADMIN">ADMIN</option>
+          </select>
+        </div>
+        <button
+          type="submit"
+          disabled={loading}
+          className="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs py-3 px-6 rounded-xl transition-all shadow-lg"
+        >
+          {loading ? 'Adding...' : '+ Add User'}
+        </button>
+      </form>
+
+      {/* User Table */}
+      <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-xl">
         <table className="w-full text-left text-xs">
-          <thead>
-            <tr className="text-slate-500 uppercase text-[10px] border-b border-slate-800 pb-2">
-              <th className="pb-3">User Name</th>
-              <th className="pb-3">Email Address</th>
-              <th className="pb-3">Assigned Role</th>
-              <th className="pb-3">Quick Switch Persona</th>
-              <th className="pb-3 text-right">Status</th>
+          <thead className="bg-slate-950 text-slate-400 border-b border-slate-800 uppercase text-[10px]">
+            <tr>
+              <th className="p-4">Name</th>
+              <th className="p-4">Email</th>
+              <th className="p-4">Current Role</th>
+              <th className="p-4 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-800/60">
-            {users.map((u) => (
-              <tr key={u.id} className="hover:bg-slate-800/40">
-                <td className="py-3.5 font-bold text-white">{u.name}</td>
-                <td className="py-3.5 text-slate-400">{u.email}</td>
-                <td className="py-3.5">
-                  <select
-                    value={u.role}
-                    onChange={(e) => updateUserRole(u.id, e.target.value as UserRole)}
-                    className="bg-slate-950 border border-slate-800 rounded-lg p-1.5 text-slate-200 font-medium"
-                  >
-                    {ALL_ROLES.map((r) => (
-                      <option key={r} value={r}>{r}</option>
-                    ))}
-                  </select>
-                </td>
-                <td className="py-3.5">
-                  <button
-                    onClick={() => setCurrentUser(u)}
-                    className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-blue-400 rounded-lg text-[11px] font-bold border border-slate-700"
-                  >
-                    Simulate Login
-                  </button>
-                </td>
-                <td className="py-3.5 text-right">
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                    {u.status}
-                  </span>
+          <tbody className="divide-y divide-slate-800">
+            {users.length === 0 ? (
+              <tr>
+                <td colSpan={4} className="p-8 text-center text-slate-500 italic">
+                  No users found in database. Add your first team member above!
                 </td>
               </tr>
-            ))}
+            ) : (
+              users.map((u) => (
+                <tr key={u.id} className="hover:bg-slate-800/40 transition-colors">
+                  <td className="p-4 font-bold text-white">{u.name}</td>
+                  <td className="p-4 text-slate-400">{u.email}</td>
+                  <td className="p-4">
+                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                      u.role === 'TECH_LEAD' ? 'bg-purple-500/15 text-purple-400 border border-purple-500/30' :
+                      u.role === 'ENGINEER' ? 'bg-blue-500/15 text-blue-400 border border-blue-500/30' :
+                      u.role === 'ADMIN' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' :
+                      'bg-amber-500/15 text-amber-400 border border-amber-500/30'
+                    }`}>
+                      {u.role}
+                    </span>
+                  </td>
+                  <td className="p-4 text-right space-x-3">
+                    <select
+                      value={u.role}
+                      onChange={(e) => handleRoleChange(u.id, e.target.value)}
+                      className="bg-slate-950 border border-slate-800 rounded-lg p-1.5 text-xs text-white"
+                    >
+                      <option value="ENGINEER">ENGINEER</option>
+                      <option value="TECH_LEAD">TECH_LEAD</option>
+                      <option value="SALES">SALES</option>
+                      <option value="ADMIN">ADMIN</option>
+                    </select>
+                    <button
+                      onClick={() => handleDeleteUser(u)}
+                      className="bg-red-500/15 hover:bg-red-500/30 text-red-400 border border-red-500/30 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
-
-      {/* Audit Log Stream */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
-        <h2 className="text-lg font-extrabold text-white">Security & Action Audit Logs</h2>
-        <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2 font-mono text-[11px] max-h-60 overflow-y-auto">
-          {auditLogs.map((log) => (
-            <div key={log.id} className="flex justify-between items-center border-b border-slate-900 pb-1.5">
-              <div>
-                <span className="text-slate-500">[{log.timestamp}]</span>{' '}
-                <strong className="text-blue-400">{log.user}</strong>: <span className="text-slate-300">{log.action}</span>
-              </div>
-              <span className="px-2 py-0.5 rounded text-[9px] bg-slate-800 text-slate-400 uppercase">{log.category}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Register User Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-5">
-            <h3 className="text-lg font-extrabold text-white">Register New User</h3>
-            <form onSubmit={handleCreateUser} className="space-y-4 text-xs">
-              <div>
-                <label className="block font-bold text-slate-300 mb-1">Full Name</label>
-                <input
-                  type="text"
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Thatho Motsoasele"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white"
-                />
-              </div>
-              <div>
-                <label className="block font-bold text-slate-300 mb-1">Email Address</label>
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="thatho@cloudalign.co.za"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white"
-                />
-              </div>
-              <div>
-                <label className="block font-bold text-slate-300 mb-1">Initial Role Assignment</label>
-                <select
-                  value={role}
-                  onChange={(e) => setRole(e.target.value as UserRole)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white"
-                >
-                  {ALL_ROLES.map((r) => (
-                    <option key={r} value={r}>{r}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="pt-2 flex justify-end space-x-3">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2.5 bg-slate-800 text-slate-300 font-bold rounded-xl"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl"
-                >
-                  Save User
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
